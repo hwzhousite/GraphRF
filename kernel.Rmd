@@ -1,0 +1,173 @@
+---
+title: "kernel"
+output: pdf_document
+---
+
+```{r}
+
+library(RLT)
+
+load("./data/kernel_9004_500.Rdata")
+load("./data/y.Rdata")
+
+X <- kernel_90004
+y <- mortality
+
+n = nrow(X)
+trainn = 200
+testn = n - trainn
+
+ntrees = 1
+ncores = 1
+nmin = 10
+mtry = 10
+sampleprob = 0.85
+rule = "best"
+nsplit = ifelse(rule == "best", 0, 3)
+importance = FALSE
+
+trainid = sample(1:n, trainn,replace = TRUE)
+trainX = X[trainid,trainid]
+trainY = y[trainid]
+
+testX = X[-trainid,trainid]
+testY = y[-trainid]
+
+```
+
+
+```{r}
+n <- 1000
+BM <-  matrix(NA, nrow = n, ncol = n)
+Y <- rep(c(1,0,2,3), each = n/4)
+
+for (i in 1:n) {
+  
+  for (j in 1:n) {
+    
+    if(i == j){
+      
+      BM[i,j] <- 1
+      
+    }else{
+      
+      if(Y[i] == Y[j]){
+        p = 0.6
+      }else{
+        p=0.4
+      }
+      
+      BM[i,j] <- sample(c(1,0), size = 1, prob = c(p,1-p) )
+      
+    }
+    
+  }
+  
+  
+  
+}
+
+```
+
+```{r}
+X <- BM
+y <- Y
+n = nrow(X)
+trainn = 0.7 * n
+testn = n - trainn
+
+ntrees = 100
+ncores = 1
+nmin = 5
+mtry = 10
+sampleprob = 0.85
+rule = "best"
+nsplit = ifelse(rule == "best", 0, 3)
+importance = FALSE
+
+trainid = sample(1:n, trainn,replace = TRUE)
+trainX = X[trainid,trainid]
+trainY = y[trainid]
+
+testX = X[-trainid,trainid]
+testY = y[-trainid]
+
+
+```
+
+
+```{r,message=FALSE}
+RLTfit <- RLT(trainX, as.factor(trainY), ntrees = ntrees, ncores = ncores, nmin = nmin/2, mtry = mtry, split.gen = rule, nsplit = nsplit, resample.prob = sampleprob, importance = importance)
+
+RLTPred <- predict.RLT(RLTfit, testX, ncores = ncores)
+#treePred <- apply(RLTPred$Prediction , 1, function(x) mean(x,na.rm = TRUE))
+treePred <- RLTPred$Prediction 
+which(!complete.cases(treePred))
+apply(treePred, 1, mean)
+
+Ktrain <- graph.kernel(RLTfit,trainX)
+
+Ktest <- graph.kernel(RLTfit, testX, trainX)
+```
+
+
+```{r}
+#library('plot.matrix')
+RLTKtrain <- Ktrain$Kernel/ntrees
+RLTKtest <- Ktest$Kernel/ntrees 
+
+trainK <- exp(-trainX/1000)
+
+pred <- RLTKtest %*% trainY/rowSums(RLTKtest)
+
+table(as.numeric(pred > 0.5), testY)
+
+mean(as.numeric(pred > 0.5) == testY)
+
+
+mean(as.numeric(treePred > 0.5) == testY)
+```
+
+
+```{r}
+sample_id <- sample(1:10,n,replace = TRUE)
+
+per <- matrix(NA, nrow = 2, ncol = 10)
+
+for (i in 1:10) {
+  
+  trainid <- which(sample_id == i)
+  
+  trainX = X[trainid,trainid]
+  trainY = y[trainid]
+  
+  testX = X[-trainid,trainid]
+  testY = y[-trainid]
+  
+  RLTfit <- RLT(trainX, as.factor(trainY), ntrees = ntrees, ncores = ncores, nmin = nmin/2, mtry = mtry, split.gen = rule, nsplit = nsplit, resample.prob = sampleprob, importance = importance)
+  
+  RLTPred <- predict.RLT(RLTfit, testX, ncores = ncores)
+  treePred <- apply(RLTPred$Prediction , 1, function(x) mean(x,na.rm = TRUE))
+  
+  
+  Ktest <- graph.kernel(RLTfit, testX, trainX)
+  
+  
+  RLTKtest <- Ktest$Kernel/ntrees 
+  
+  
+  
+  pred <- RLTKtest %*% trainY/rowSums(RLTKtest)
+  
+  
+  per[1,i] <- mean(as.numeric(pred > 0.5) == testY)
+  
+  
+  per[2,i] <- mean(as.numeric(treePred > 0.5) == testY)
+  }
+
+```
+
+
+
+
