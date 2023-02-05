@@ -45,7 +45,7 @@ void Graph_Cla_Split(Multi_Split_Class& TempSplit,
   for(size_t k = 0; k < N-1; k++){
 
     // get the cut-off point based on the variance
-    temp_score = graph_cla_score_gini(indices, y, k);
+    temp_score = graph_multicla_score_gini(indices, y, k);
     
     if (temp_score > TempSplit.score){
       
