@@ -80,6 +80,10 @@ double graph_cla_score_gini(uvec& indices,
                             const uvec& Y,
                             size_t& k);
 
+double graph_multicla_score_gini(uvec& indices,
+                                 const uvec& Y,
+                                 size_t& k);
+
 double cla_unsuper_score_var(uvec& indices,
                              const vec& x,
                              size_t& k);

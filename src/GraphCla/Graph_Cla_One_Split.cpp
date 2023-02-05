@@ -62,24 +62,24 @@ double graph_cla_score_gini(uvec& indices,
                             const uvec& Y,
                             size_t& k)
 {
-  //DEBUG_Rcout <<" --- Supervised with Gini score --- "<< std::endl;
-  
-  size_t N = indices.n_elem;
-  double left = 0; double right =0;
-  
-  for(size_t i = 0; i <= k; i++){
-    if(Y(i) == Y(0)) left++;
-  }
-  for(size_t i = k+1; i <= N-1; i++){
-    if(Y(i) == Y(0)) right++;
-  }
-  
-  double leftmean = left/(k+1); //arma::mean(Y( linspace<uvec>(0,k,k+1) ));
-  double rightmean = right/(N-k-1); //arma::mean(Y( linspace<uvec>(k+1, N-1, N-k-1) ));  
-  
-  double gini = ((k+1)*leftmean*(1-leftmean) + (N-k-1)*rightmean*(1-rightmean))/N;
-
-  return (1 - gini); // larger the better 
+      //DEBUG_Rcout <<" --- Supervised with Gini score --- "<< std::endl;
+      
+      size_t N = indices.n_elem;
+      double left = 0; double right =0;
+      
+      for(size_t i = 0; i <= k; i++){
+        if(Y(i) == Y(0)) left++;
+      }
+      for(size_t i = k+1; i <= N-1; i++){
+        if(Y(i) == Y(0)) right++;
+      }
+      
+      double leftmean = left/(k+1); //arma::mean(Y( linspace<uvec>(0,k,k+1) ));
+      double rightmean = right/(N-k-1); //arma::mean(Y( linspace<uvec>(k+1, N-1, N-k-1) ));  
+      
+      double gini = ((k+1)*leftmean*(1-leftmean) + (N-k-1)*rightmean*(1-rightmean))/N;
+    
+      return (1 - gini); // larger the better 
   
 }
 
@@ -92,24 +92,40 @@ double graph_multicla_score_gini(uvec& indices,
   size_t N = indices.n_elem;
   uvec y_unique = find_unique(Y);
   size_t q = y_unique.n_elem;
-  vec gini_vec(q);
+ 
+  double leftmean = 0;
+  double rightmean = 0;
   
-  for(size_t i = 0; i <= k; i++){
-    if(Y(i) == Y(0)) left++;
+  for(size_t j = 0; j < q; j++){
+    
+      size_t count = 0;
+  
+      for(size_t i = 0; i <= k; i++){
+     
+          if(Y(i) == Y(y_unique(j))) count++;
+       
+      }
+      
+      leftmean = leftmean + (count/(k+1)) * (count/(k+1)) ;
+     
   }
-  for(size_t i = k+1; i <= N-1; i++){
-    if(Y(i) == Y(0)) right++;
+  
+  for(size_t j = 0; j < q; j++){
+    
+    size_t count = 0;
+    
+    for(size_t i = k+1; i <= N-1; i++){
+      
+          if(Y(i) == Y(y_unique(j))) count++;
+      
+    }
+    
+    rightmean = rightmean + (count/(k+1)) * (count/(k+1)) ;
+    
   }
   
-  double leftmean = left/(k+1); //arma::mean(Y( linspace<uvec>(0,k,k+1) ));
-  double rightmean = right/(N-k-1); //arma::mean(Y( linspace<uvec>(k+1, N-1, N-k-1) ));  
-  
-  double gini = ((k+1)*leftmean*(1-leftmean) + (N-k-1)*rightmean*(1-rightmean))/N;
-  
-  
-  for()
-  
-  
+ 
+  double gini = ((k+1)*leftmean + (N-k-1)*rightmean)/N;
   
   
   return (1 - gini); // larger the better 
