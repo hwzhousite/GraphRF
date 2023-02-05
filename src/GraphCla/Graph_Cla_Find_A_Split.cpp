@@ -37,7 +37,7 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
   // SVD Decomposition
   int method = 2;
   
-  arma::mat A;
+  arma::mat A, L;
   
   if (method == 1) 
   {// submatrix col same as rows
@@ -62,10 +62,21 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
   }
   
   if (method == 3) // laplacian
-  {
-    // redefine A = laplacian
-    //arma::mat A = CLA_DATA.X(obs_id, obs_id);
-    //A = diagmat(A.each_row( [ ](vec& a){ sum(a); } )) - A;
+  {  
+    if (mtry == P)
+    {
+      A = CLA_DATA.X(obs_id, obs_id);
+      OneSplit.SplitVar = obs_id;
+      
+    }else{
+      uvec var_try = arma::randperm(P,mtry);
+      //std::cout<< P << " / " << var_try << endl;
+      A = CLA_DATA.X(obs_id, obs_id(var_try));  
+      OneSplit.SplitVar = obs_id(var_try);
+      
+    }
+     L = arma::diagmat(arma::sum(A, 1)) - A;
+     A = pow(trans(A),-1) * L * pow(A,-1)
 
   }
   
@@ -83,7 +94,6 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
   
   arma::uvec y = CLA_DATA.Y(obs_id);
   
-  cout << y << endl;
 
   // select the best variable
   
