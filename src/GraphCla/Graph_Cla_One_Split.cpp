@@ -33,19 +33,30 @@ void Graph_Cla_Split(Multi_Split_Class& TempSplit,
   if ( x(indices(0)) == x(indices(N-1)) ) return;
   
   // best split, check all splitting point 
+  
+  int sup = 0;
+  vec xs;
   uvec y;
+  y = Y(indices);
+  xs = x(indices);
+  /*
+  if(std::isnan(y(0))){
     
-  //if(Y.empty())
-    
-    y = Y(indices);
-    
- 
+    sup = 1;
+  }
+  */
   //uvec y = Y(indices);
   
   for(size_t k = 0; k < N-1; k++){
 
     // get the cut-off point based on the variance
-    temp_score = graph_multicla_score_gini(indices, y, k);
+    if(sup == 1){
+        temp_score = graph_multicla_score_gini(indices, y, k);
+    }else{
+      
+        temp_score = cla_unsuper_score_var(indices, xs, k);
+      
+    }
     
     if (temp_score > TempSplit.score){
       
@@ -87,7 +98,7 @@ double graph_multicla_score_gini(uvec& indices,
                             const uvec& Y,
                             size_t& k)
 {
-  //DEBUG_Rcout <<" --- Supervised with Gini score --- "<< std::endl;
+  //DEBUG_Rcout <<" --- Multiclass Gini score --- "<< std::endl;
   
   size_t N = indices.n_elem;
   uvec y_unique = find_unique(Y);
@@ -138,13 +149,43 @@ double cla_unsuper_score_var(uvec& indices,
   //DEBUG_Rcout << " --- UnSupervised with Variance score --- "<< std::endl;
   
   double score = 0;
+ 
   double left = 0; double right =0;
-  
+  double leftmean = 0, rightmean = 0;
   size_t N = indices.size();
   
+    
+    for(size_t i = 0; i <= k; i++){
+      
+      leftmean = leftmean + x(i);
+      
+    }
+    
+    for(size_t i = k+1; i <= N-1; i++){
+      
+      rightmean = rightmean + x(i);
+      
+    }
+    
+    leftmean = leftmean/(k+1); rightmean = rightmean/(N-k-1);
+    
+    for(size_t i = 0; i <= k; i++){
+      
+      left = left + (x(i) - leftmean) * (x(i) - leftmean);
+      
+    }
+    
+    for(size_t i = 0; i <= k; i++){
+      
+      right = right + (x(i) - rightmean) * (x(i) - rightmean);
+      
+    }
   
   
   
-  return 0;
+  score = ((k+1)*left/k + (N-k-1)*right/(N-k-2))/N;
+  
+  
+  return score;
 }
 

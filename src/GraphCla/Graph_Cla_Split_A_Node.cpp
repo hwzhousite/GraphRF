@@ -70,6 +70,7 @@ TERMINATENODE:
       cout << "Splitting Wrong" << endl;
       
       if(obs_id.n_elem == 0) obs_id = left_id;
+     
       
       goto TERMINATENODE;
       
@@ -106,7 +107,7 @@ TERMINATENODE:
     OneTree.NodeSize(Node) = left_id.n_elem + obs_id.n_elem;
     
     // split the left and right nodes 
-   /*
+   
     Graph_Cla_Split_A_Node(NextLeft,
                            OneTree,
                            CLA_DATA,
@@ -123,7 +124,7 @@ TERMINATENODE:
                            obs_id, 
                            var_id);
    
-   */
+   
   }
 }
 
@@ -155,13 +156,35 @@ void Graph_Cla_Terminate_Node(size_t Node,
 
   OneTree.NodeAve(Node) = M;
   
-  if(isnan(M)) {
+  if(std::isnan(M)) {
     
     cout << " Find NA Value" << endl;
     
       cout << N << endl;
     
   }
+   
+  /*
+  size_t N = obs_id.n_elem;
+  uvec temp = Y(obs_id);
+  uvec y_unique = find_unique(temp);
+  size_t q = y_unique.n_elem;
+  vec count; count.zeros(q);
+  
+  for(size_t i = 0; i < q; i++){
+    
+    for(size_t j = 0; j < N; j++){
+      
+      if(temp(j) == temp(y_unique(i)) ) count(i) = count(i) + 1;
+      
+    }
+    
+  }
+  //cout << temp << endl;
+  //cout << count << endl;
+  //cout << temp(y_unique(count.index_max())) << endl;
+  OneTree.NodeAve(Node) = temp(y_unique(count.index_max()));
+  */
   //cout << "--terminate Mean--" << OneTree.NodeAve(Node)   << std::endl;
   
 }

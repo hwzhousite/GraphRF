@@ -1,0 +1,398 @@
+---
+title: "graph shape"
+output: pdf_document
+date: "2023-02-13"
+---
+
+```{r}
+library(igraph)
+library(RLT)
+library(pROC)
+source("data.R")
+
+#library(networkdata)
+
+sw <- graph("Zachary")
+plot(sw, vertex.size=6, vertex.label=NA, layout=layout_in_circle)
+a <- as_adj(sw, type = "both", sparse = FALSE)
+a[1:20,1:20]
+Y <- rep(c(0,1), each = nrow(a)/2)
+```
+
+
+
+```{r}
+
+X <- a
+y <- as.factor(Y)
+n = nrow(X)
+trainn = 0.8 * n
+testn = n - trainn
+
+ntrees = 1000
+ncores = 1
+nmin = 5
+mtry = 3
+sampleprob = 0.85
+rule = "best"
+nsplit = ifelse(rule == "best", 0, 3)
+importance = FALSE
+
+trainid = sample(1:n, trainn,replace = TRUE)
+trainX = X[trainid,trainid]
+trainY = y[trainid]
+
+testX = X[-trainid,-trainid]
+testY = y[-trainid]
+```
+
+```{r}
+RLTfit <- RLT(trainX, trainY, ntrees = ntrees, ncores = ncores, nmin = nmin/2, mtry = mtry, split.gen = rule, nsplit = nsplit, resample.prob = sampleprob, importance = importance)
+
+
+Ktrain <- graph.kernel(RLTfit,trainX)
+```
+
+```{r}
+
+p_mat <- matrix(NA, nrow = 8, ncol = 1)
+```
+
+
+# Simple Star Graph
+
+```{r}
+
+a <- make_star(100)
+plot(a, vertex.size=10, vertex.label=NA) 
+
+X <- as_adj(a, type = "both", sparse = FALSE)
+y <- as.factor(rep(c(0,1), each = nrow(X)/2))
+n = nrow(X)
+
+
+ntrees = 1000
+ncores = 1
+nmin = 5
+mtry = 3
+sampleprob = 0.85
+rule = "best"
+nsplit = ifelse(rule == "best", 0, 3)
+importance = FALSE
+
+for (i in 1:nrow(X)) {
+   
+    trainid <- i
+  
+    trainX = X[-trainid,-trainid]
+    trainY = y[-trainid]
+    
+    testX = X[trainid,-trainid, drop = FALSE]
+    testY = y[trainid]
+    
+    RLTfit <- RLT(trainX, trainY, ntrees = ntrees, ncores = ncores, nmin = nmin/2, mtry = mtry, split.gen = rule, nsplit = nsplit, resample.prob = sampleprob, importance = importance)
+    
+    Ktrain <- graph.kernel(RLTfit,trainX)
+
+    Ktest <- graph.kernel(RLTfit, testX, trainX)
+    
+    RLTKtrain <- Ktrain$Kernel/ntrees
+    RLTKtest <- Ktest$Kernel/ntrees 
+
+    roc_obj <- roc(testX, RLTKtest)
+        temp[i] <- auc(roc_obj)
+
+    }
+    
+    p_mat[1,] <- mean(temp)
+
+      
+
+
+
+```
+
+
+# Tree Graph
+
+```{r}
+
+a <- make_tree(50, children = 2, mode = "undirected")
+
+plot(a, vertex.size=10, vertex.label=NA) 
+
+{
+  
+    X <- as_adj(a, type = "both", sparse = FALSE)
+    y <- as.factor(rep(c(0,1), each = nrow(X)/2))
+    n = nrow(X)
+    
+    
+    ntrees = 200
+    ncores = 1
+    nmin = 5
+    mtry = 3
+    sampleprob = 0.85
+    rule = "best"
+    nsplit = ifelse(rule == "best", 0, 3)
+    importance = FALSE
+    
+    temp <- rep(NA,nrow(X))
+    
+    for (i in 1:nrow(X)) {
+       
+        trainid <- i
+      
+        trainX = X[-trainid,-trainid]
+        trainY = y[-trainid]
+        
+        testX = X[trainid,-trainid, drop = FALSE]
+        testY = y[trainid]
+        
+        RLTfit <- RLT(trainX, trainY, ntrees = ntrees, ncores = ncores, nmin = nmin/2, mtry = mtry, split.gen = rule, nsplit = nsplit, resample.prob = sampleprob, importance = importance)
+        
+        Ktrain <- graph.kernel(RLTfit,trainX)
+    
+        Ktest <- graph.kernel(RLTfit, testX, trainX)
+        
+        RLTKtrain <- Ktrain$Kernel/ntrees
+        RLTKtest <- Ktest$Kernel/ntrees 
+        
+        roc_obj <- roc(testX, RLTKtest)
+        temp[i] <- auc(roc_obj)
+
+    }
+    
+    perform <- mean(temp)
+}
+
+```
+
+
+# Zach
+
+```{r}
+
+a <- graph("Zachary")
+
+plot(a, vertex.size=10, vertex.label=NA) 
+
+{
+  
+    X <- as_adj(a, type = "both", sparse = FALSE)
+    y <- as.factor(rep(c(0,1), each = nrow(X)/2))
+    n = nrow(X)
+    
+    
+    ntrees = 200
+    ncores = 1
+    nmin = 5
+    mtry = 3
+    sampleprob = 0.85
+    rule = "best"
+    nsplit = ifelse(rule == "best", 0, 3)
+    importance = FALSE
+    
+    temp <- rep(NA,nrow(X))
+    
+    for (i in 1:nrow(X)) {
+       
+        trainid <- i
+      
+        trainX = X[-trainid,-trainid]
+        trainY = y[-trainid]
+        
+        testX = X[trainid,-trainid, drop = FALSE]
+        testY = y[trainid]
+        
+        RLTfit <- RLT(trainX, trainY, ntrees = ntrees, ncores = ncores, nmin = nmin/2, mtry = mtry, split.gen = rule, nsplit = nsplit, resample.prob = sampleprob, importance = importance)
+        
+        Ktrain <- graph.kernel(RLTfit,trainX)
+    
+        Ktest <- graph.kernel(RLTfit, testX, trainX)
+        
+        RLTKtrain <- Ktrain$Kernel/ntrees
+        RLTKtest <- Ktest$Kernel/ntrees 
+        
+        roc_obj <- roc(testX, RLTKtest)
+        temp[i] <- auc(roc_obj)
+
+    }
+    
+    perform <- mean(temp)
+}
+
+```
+
+
+# Erdos-Renyi 
+
+```{r}
+
+a <- sample_gnm(n=100, m=40) 
+
+plot(a, vertex.size=10, vertex.label=NA) 
+
+{
+  
+    X <- as_adj(a, type = "both", sparse = FALSE)
+    y <- as.factor(rep(c(0,1), each = nrow(X)/2))
+    n = nrow(X)
+    
+    
+    ntrees = 200
+    ncores = 1
+    nmin = 5
+    mtry = 3
+    sampleprob = 0.85
+    rule = "best"
+    nsplit = ifelse(rule == "best", 0, 3)
+    importance = FALSE
+    
+    temp <- rep(NA,nrow(X))
+    
+    for (i in 1:nrow(X)) {
+       
+        trainid <- i
+      
+        trainX = X[-trainid,-trainid]
+        trainY = y[-trainid]
+        
+        testX = X[trainid,-trainid, drop = FALSE]
+        testY = y[trainid]
+        
+        RLTfit <- RLT(trainX, trainY, ntrees = ntrees, ncores = ncores, nmin = nmin/2, mtry = mtry, split.gen = rule, nsplit = nsplit, resample.prob = sampleprob, importance = importance)
+        
+        Ktrain <- graph.kernel(RLTfit,trainX)
+    
+        Ktest <- graph.kernel(RLTfit, testX, trainX)
+        
+        RLTKtrain <- Ktrain$Kernel/ntrees
+        RLTKtest <- Ktest$Kernel/ntrees 
+        
+        roc_obj <- roc(testX, RLTKtest)
+        temp[i] <- auc(roc_obj)
+
+    }
+    
+    perform <- mean(temp)
+}
+
+```
+
+
+
+
+```{r}
+library(igraph)
+
+g <- erdos.renyi.game(10, p=1/2) + erdos.renyi.game(10, p=1/2)
+hrg <- hrg.fit(g)
+
+
+```
+
+```{r}
+{
+  
+    X <- as_adj(a, type = "both", sparse = FALSE)
+    y <- as.factor(rep(c(0,1), each = nrow(X)/2))
+    n = nrow(X)
+    
+    
+    ntrees = 200
+    ncores = 1
+    nmin = 5
+    mtry = 3
+    sampleprob = 0.85
+    rule = "best"
+    nsplit = ifelse(rule == "best", 0, 3)
+    importance = FALSE
+    
+    temp <- rep(NA,nrow(X))
+    
+    for (i in 1:nrow(X)) {
+       
+        trainid <- i
+      
+        trainX = X[-trainid,-trainid]
+        trainY = y[-trainid]
+        
+        testX = X[trainid,-trainid, drop = FALSE]
+        testY = y[trainid]
+        
+        RLTfit <- RLT(trainX, trainY, ntrees = ntrees, ncores = ncores, nmin = nmin/2, mtry = mtry, split.gen = rule, nsplit = nsplit, resample.prob = sampleprob, importance = importance)
+        
+        Ktrain <- graph.kernel(RLTfit,trainX)
+    
+        Ktest <- graph.kernel(RLTfit, testX, trainX)
+        
+        RLTKtrain <- Ktrain$Kernel/ntrees
+        RLTKtest <- Ktest$Kernel/ntrees 
+        
+        roc_obj <- roc(testX, RLTKtest)
+        temp[i] <- auc(roc_obj)
+
+    }
+    
+    perform <- mean(temp)
+}
+
+
+
+```
+
+
+```{r}
+library('plot.matrix')
+dt <- BTSBM(n=100,d=3,a.seq=0.2^seq(0,3),lambda=50)
+plot(dt$node.sim.mat)
+plot(dt$P)
+```
+
+```{r}
+{
+  
+    X <- dt$node.sim.mat
+    y <- as.factor(rep(c(0,1), each = nrow(X)/2))
+    n = nrow(X)
+    
+    
+    ntrees = 200
+    ncores = 1
+    nmin = 5
+    mtry = 3
+    sampleprob = 0.85
+    rule = "best"
+    nsplit = ifelse(rule == "best", 0, 3)
+    importance = FALSE
+    
+    temp <- rep(NA,nrow(X))
+    
+    for (i in 1:nrow(X)) {
+       
+        trainid <- c(1,2)
+      
+        trainX = X[-trainid,-trainid]
+        trainY = y[-trainid]
+        
+        testX = X[trainid,-trainid, drop = FALSE]
+        testY = y[trainid]
+        
+        RLTfit <- RLT(trainX, trainY, ntrees = ntrees, ncores = ncores, nmin = nmin/2, mtry = mtry, split.gen = rule, nsplit = nsplit, resample.prob = sampleprob, importance = importance)
+      
+    
+        Ktest <- graph.kernel(RLTfit, testX[1,,drop = FALSE], testX[2,,drop = FALSE])
+        
+        #RLTKtrain <- Ktrain$Kernel/ntrees
+        RLTKtest <- Ktest$Kernel/ntrees 
+        
+        roc_obj <- roc(testX, RLTKtest)
+        temp[i] <- auc(roc_obj)
+
+    }
+    
+    perform <- mean(temp)
+}
+```
+

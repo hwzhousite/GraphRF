@@ -59,6 +59,12 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
           OneSplit.SplitVar = obs_id(var_try);
         
       }
+      
+      // Centering
+      mat center = mean(A, 0);
+      
+       A = A - repmat(center, A.n_rows, 1) + pow(10,-6) * mat(A.n_rows, A.n_cols, fill::eye);
+      
   }
   
   if (method == 3) // laplacian
@@ -76,18 +82,16 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
       
     }
      L = arma::diagmat(arma::sum(A, 1)) - A;
-     A = pow(trans(A),-1) * L * pow(A,-1)
+     A = trans(A) * L * A;
+     
+     //cout << A << endl;
 
   }
   
-  // Centering
-  mat center = mean(A, 0);
-
-  mat A_center = A - repmat(center, A.n_rows, 1) + pow(10,-6) * mat(A.n_rows, A.n_cols, fill::eye);
-
+  
   // SVD Decomposition
   arma::mat U; arma::mat V; arma::vec s;
-  svd(U,s,V,A_center);
+  svd(U,s,V,A);
   
   // Tempmat contains the first k principle component
   // TempLoading contains the corresponding vector
