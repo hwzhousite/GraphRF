@@ -35,7 +35,7 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
   
   //cout << " --- Reg_Find_A_Split with mtry = " << mtry << std::endl;
   // SVD Decomposition
-  int method = 2;
+  int method = 3;
   
   arma::mat A, L;
   
@@ -53,6 +53,7 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
         OneSplit.SplitVar = obs_id;
         
       }else{
+        
           uvec var_try = arma::randperm(P,mtry);
           //std::cout<< P << " / " << var_try << endl;
           A = CLA_DATA.X(obs_id, obs_id(var_try));  
@@ -63,11 +64,36 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
       // Centering
       mat center = mean(A, 0);
       
-       A = A - repmat(center, A.n_rows, 1) + pow(10,-6) * mat(A.n_rows, A.n_cols, fill::eye);
+       L = A - repmat(center, A.n_rows, 1) + pow(10,-6) * mat(A.n_rows, A.n_cols, fill::eye);
       
   }
   
   if (method == 3) // laplacian
+  {  
+    if (mtry == P)
+    {
+      
+      A = CLA_DATA.X(obs_id, obs_id);
+      OneSplit.SplitVar = obs_id;
+      
+    }else{
+      
+      uvec var_try = arma::randperm(P,mtry);
+      //std::cout<< P << " / " << var_try << endl;
+      A = CLA_DATA.X(obs_id, obs_id(var_try));  
+      OneSplit.SplitVar = obs_id(var_try);
+      
+    }
+    
+     mat K = trans(A) * A;
+     L = arma::diagmat(arma::sum(K, 1)) - K;
+
+     
+     //cout << A << endl;
+
+  }
+  
+  if (method == 4) // laplacian
   {  
     if (mtry == P)
     {
@@ -81,17 +107,18 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
       OneSplit.SplitVar = obs_id(var_try);
       
     }
-     L = arma::diagmat(arma::sum(A, 1)) - A;
-     A = trans(A) * L * A;
-     
-     //cout << A << endl;
-
+    mat K = trans(A) * A;
+    mat D = arma::diagmat(pow(arma::sum(K, 1), 0.5));
+    L = inv(D) * K * D;
+    
+    //cout << A << endl;
+    
   }
   
   
   // SVD Decomposition
   arma::mat U; arma::mat V; arma::vec s;
-  svd(U,s,V,A);
+  svd(U,s,V,L);
   
   // Tempmat contains the first k principle component
   // TempLoading contains the corresponding vector
@@ -101,7 +128,7 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
 
   // select the best variable
   
-  for(size_t j = 0; j < k; j++)
+  for(size_t j = 1; j < k; j++)
   {
     arma::vec TempLoad = V.unsafe_col(j);
     arma::uvec TempSplitVar;
@@ -109,7 +136,7 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
     TempSplit.value = 0;
     TempSplit.score = -1;
     arma::vec TempSplitid = A * (V.unsafe_col(j));
-    //cout << "loading : " << V.unsafe_col(j) << endl;
+    cout << "loading : " << V.unsafe_col(j) << endl;
     
     Graph_Cla_Split(TempSplit, 
                         TempSplitid, 

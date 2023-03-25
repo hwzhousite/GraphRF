@@ -345,10 +345,17 @@ hrg <- hrg.fit(g)
 
 ```{r}
 library('plot.matrix')
-dt <- BTSBM(n=100,d=3,a.seq=0.2^seq(0,3),lambda=50)
+dt <- BTSBM(n=50,d=3,a.seq=0.2^seq(0,3),lambda=50)
 plot(dt$node.sim.mat)
 plot(dt$P)
 ```
+
+
+```{r}
+X <- dt$node.sim.mat
+
+```
+
 
 ```{r}
 {
@@ -358,21 +365,29 @@ plot(dt$P)
     n = nrow(X)
     
     
-    ntrees = 200
+    ntrees = 100
     ncores = 1
     nmin = 5
-    mtry = 3
+    mtry = 10
     sampleprob = 0.85
     rule = "best"
     nsplit = ifelse(rule == "best", 0, 3)
     importance = FALSE
     
     temp <- rep(NA,nrow(X))
+    tru <- rep(NA, nrow(X) * nrow(X))
+    est <- rep(NA, nrow(X) * nrow(X))
+    t <- 0
     
-    for (i in 1:nrow(X)) {
-       
-        trainid <- c(1,2)
+    for(p in 1:(nrow(X) - 1)){
       
+      for (q in (p + 1):nrow(X)) {
+        
+        t <- t + 1
+        trainid <- c(p,q)
+        
+        tru[t] <-  ifelse(X[p, q] >= 4, 1, 0)
+        
         trainX = X[-trainid,-trainid]
         trainY = y[-trainid]
         
@@ -387,12 +402,19 @@ plot(dt$P)
         #RLTKtrain <- Ktrain$Kernel/ntrees
         RLTKtest <- Ktest$Kernel/ntrees 
         
-        roc_obj <- roc(testX, RLTKtest)
-        temp[i] <- auc(roc_obj)
+        
+        est[t] <- RLTKtest
 
+        
+      }
+      
     }
     
-    perform <- mean(temp)
+library(pROC)
+auc( tru, est)
+
+#hist(est)
+
 }
 ```
 
