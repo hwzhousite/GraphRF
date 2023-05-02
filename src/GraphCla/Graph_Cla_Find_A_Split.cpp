@@ -30,7 +30,7 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
   size_t P = obs_id.n_elem;
   mtry = ( (mtry <= P) ? mtry:P ); // take minimum
   
-  size_t k = 2;
+  size_t k = 5;
   k = ( (k <= mtry)? k : mtry);
   
   //cout << " --- Reg_Find_A_Split with mtry = " << mtry << std::endl;
@@ -119,7 +119,7 @@ void Graph_Find_A_Split(Multi_Split_Class& OneSplit,
   // SVD Decomposition
   arma::mat U; arma::mat V; arma::vec s;
   svd(U,s,V,L);
-  
+  cout << s << endl;
   // Tempmat contains the first k principle component
   // TempLoading contains the corresponding vector
   

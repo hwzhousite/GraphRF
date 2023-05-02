@@ -51,7 +51,9 @@ void Graph_Cla_Split(Multi_Split_Class& TempSplit,
 
     // get the cut-off point based on the variance
     if(sup == 1){
+      
         temp_score = graph_multicla_score_gini(indices, y, k);
+      
     }else{
       
         temp_score = cla_unsuper_score_var(indices, xs, k);
@@ -175,7 +177,7 @@ double cla_unsuper_score_var(uvec& indices,
       
     }
     
-    for(size_t i = 0; i <= k; i++){
+    for(size_t i = k+1; i <= N-1 ; i++){
       
       right = right + (x(i) - rightmean) * (x(i) - rightmean);
       
